@@ -1,4 +1,6 @@
 # OR CRIME
+![Script output](https://f.cloud.github.com/assets/109988/2181001/489aa8be-973e-11e3-8bd0-12078943ea24.png)
+
 A simple project that watches crimes reported to the University of Oregon campus police.
 
 This code is open source under the MIT license. See ```LICENSE``` for complete details.
