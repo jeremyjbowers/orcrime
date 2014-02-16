@@ -1,0 +1,4 @@
+data/csv/*.csv
+data/csv/clean/*.csv
+data/pdf/*.pdf
+data/incidents.json
