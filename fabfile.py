@@ -1,3 +1,4 @@
+import collections
 import csv
 import glob
 import json
@@ -92,6 +93,8 @@ def clean_csv():
 def parse_clean_csv():
     """
     Parse CSV rows to dictionaries and add to a JSON file.
+    TODO: Each PDF is 60 days worth of crime reports, which repeat. Many do not have an ID.
+    Find out what makes them unique? Perhaps date + description but only within a filename?
     """
     incidents = []
 
@@ -115,13 +118,69 @@ def parse_clean_csv():
 
 def parse_json():
     """
-    Parses the JSON file of incidents.
+    Opens the JSON file and sends it out to subfunctions for parsing.
     """
     with open('data/incidents.json', 'rb') as readfile:
         incident_list = list(json.loads(readfile.read()))
 
-    for incident in incident_list[2000:2050]:
-        print incident
+    generate_counts_by_date(incident_list)
+    generate_counts_by_type(incident_list)
+
+def generate_counts_by_date(incident_list):
+    """
+    Generates counts of reported incident by date.
+    """
+    incident_types = collections.defaultdict(int)
+
+    for incident in incident_list:
+        incident_types[incident['Date Reported'].strip().lower()] += 1
+
+    incident_list = []
+
+    for k,v in incident_types.items():
+        incident_type_dict = {}
+        incident_type_dict['date'] = k
+        incident_type_dict['count'] = v
+        incident_list.append(incident_type_dict)
+
+    incident_list = sorted(incident_list, key=lambda x: x['count'], reverse=True)
+
+    with open('data/count-incidents-by-date.json', 'wb') as writefile:
+        writefile.write(json.dumps(incident_list))
+
+    for incident in incident_list:
+        if incident['date'] not in ["", "date reported"]:
+            print "%s: %s" % (incident['date'], incident['count'])
+
+def generate_counts_by_type(incident_list):
+    """
+    Generates counts of reported incidents by type.
+    """
+    incident_types = collections.defaultdict(int)
+
+    for incident in incident_list:
+        if u"," in incident['Nature (Classification)']:
+            for i in incident['Nature (Classification)'].split(','):
+                incident_types[i.strip().lower()] += 1
+        else:
+            incident_types[incident['Nature (Classification)'].strip().lower()] += 1
+
+    incident_list = []
+
+    for k,v in incident_types.items():
+        incident_type_dict = {}
+        incident_type_dict['type'] = k
+        incident_type_dict['count'] = v
+        incident_list.append(incident_type_dict)
+
+    incident_list = sorted(incident_list, key=lambda x: x['count'], reverse=True)
+
+    with open('data/count-incidents-by-type.json', 'wb') as writefile:
+        writefile.write(json.dumps(incident_list))
+
+    for incident in incident_list:
+        if incident['type'] not in [""]:
+            print "%s: %s" % (incident['type'], incident['count'])
 
 def bootstrap_data():
     """
